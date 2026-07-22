@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -32,8 +33,9 @@ import com.jackque.solitaire.engine.settings.SuitStyle
  * All card artwork is original and drawn with plain shapes and text for a
  * 1-bit monochrome display. "Red" suits (hearts/diamonds) are distinguished
  * without color, in the player's choice of style:
- *  - OUTLINE: red suit symbols are hollow outlines, black suits are solid
- *  - LETTERS: S/H/D/C letters, red ones hollow
+ *  - INVERTED: red suits drawn white-on-black - survives 1-bit e-ink, default
+ *  - OUTLINE: red suit symbols are hollow outlines
+ *  - LETTERS: S/H/D/C letters, red ones white-on-black
  *  - FILLED:  every suit solid (for regular LCDs)
  */
 object CardDesign {
@@ -45,27 +47,52 @@ private fun suitText(suit: Suit, style: SuitStyle): String = when (style) {
     else -> suit.symbol.toString()
 }
 
-/** Hollow glyphs for red suits in OUTLINE/LETTERS styles. */
+/** White-on-black badge for red suits in INVERTED/LETTERS styles. */
+private fun isInverted(suit: Suit, style: SuitStyle): Boolean =
+    (style == SuitStyle.INVERTED || style == SuitStyle.LETTERS) && suit.isRed
+
+/** Hollow glyphs for red suits in the OUTLINE style. */
 private fun isHollow(suit: Suit, style: SuitStyle): Boolean =
-    style != SuitStyle.FILLED && suit.isRed
+    style == SuitStyle.OUTLINE && suit.isRed
 
 @Composable
 private fun SuitGlyph(suit: Suit, style: SuitStyle, size: TextUnit, bold: Boolean = true) {
     val weight = if (bold) FontWeight.Bold else FontWeight.Normal
-    if (isHollow(suit, style)) {
-        Text(
-            text = suitText(suit, style),
-            style = TextStyle(
-                color = Color.Black,
-                fontSize = size,
-                fontWeight = weight,
-                drawStyle = Stroke(width = 2.5f),
-            ),
-            maxLines = 1,
-        )
-    } else {
-        Text(
-            text = suitText(suit, style),
+    val text = suitText(suit, style)
+    when {
+        isInverted(suit, style) -> {
+            Box(
+                modifier = Modifier
+                    .background(Color.Black, RoundedCornerShape(25))
+                    .padding(horizontal = 2.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = text,
+                    color = Color.White,
+                    fontSize = size,
+                    fontWeight = weight,
+                    maxLines = 1,
+                )
+            }
+        }
+        isHollow(suit, style) -> {
+            // Stroke width scales with the glyph so the outline stays open
+            // instead of filling in at small sizes.
+            val strokeWidth = with(LocalDensity.current) { size.toPx() / 9f }
+            Text(
+                text = text,
+                style = TextStyle(
+                    color = Color.Black,
+                    fontSize = size,
+                    fontWeight = weight,
+                    drawStyle = Stroke(width = strokeWidth),
+                ),
+                maxLines = 1,
+            )
+        }
+        else -> Text(
+            text = text,
             color = Color.Black,
             fontSize = size,
             fontWeight = weight,

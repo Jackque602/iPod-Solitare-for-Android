@@ -26,9 +26,10 @@ All artwork and code are original. Nothing is copied from Apple.
   ripples, no gradients or shadows, stable layouts that only redraw changed
   regions, a coarse-by-default timer, and a manual **full-refresh** button
   to clear ghosting.
-- **Monochrome card design** with three accessibility options for telling
-  the "red" suits apart without color: outlined suit symbols (default),
-  suit letters, or all-filled.
+- **Monochrome card design** with four accessibility options for telling
+  the "red" suits apart without color: inverted white-on-black suit
+  symbols (default, unmistakable on 1-bit e-ink), outlined symbols, suit
+  letters, or all-filled.
 - **Full keyboard play** on the Minimal Phone's QWERTY with configurable
   bindings for every action. See [docs/CONTROLS.md](docs/CONTROLS.md).
 - **Statistics**: cumulative score with high/low water marks, wins, losses,

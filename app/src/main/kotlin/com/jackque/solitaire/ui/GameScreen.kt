@@ -392,20 +392,27 @@ private fun BottomBar(s: UiState.Game, vm: GameViewModel) {
 }
 
 /**
- * E-ink ghosting eraser: paints the window solid black for a moment, then
- * back to the game. Deliberately a hard cut - no fade animation.
+ * E-ink ghosting eraser: drives the panel through two full black->white
+ * inversion cycles (the same waveform trick e-readers use), ending on a
+ * white frame so the panel settles clean before the game repaints.
+ * Deliberately hard cuts - no fade animation.
  */
 @Composable
 private fun FullRefreshOverlay(pulse: Int) {
-    var black by remember { mutableStateOf(false) }
+    var phase by remember { mutableStateOf(0) }
     LaunchedEffect(pulse) {
         if (pulse > 0) {
-            black = true
-            delay(350)
-            black = false
+            repeat(2) {
+                phase = 1
+                delay(320)
+                phase = 2
+                delay(320)
+            }
+            phase = 0
         }
     }
-    if (black) {
-        Box(Modifier.fillMaxSize().background(Color.Black).testTag("refresh_overlay"))
+    when (phase) {
+        1 -> Box(Modifier.fillMaxSize().background(Color.Black).testTag("refresh_overlay"))
+        2 -> Box(Modifier.fillMaxSize().background(Color.White).testTag("refresh_overlay"))
     }
 }
