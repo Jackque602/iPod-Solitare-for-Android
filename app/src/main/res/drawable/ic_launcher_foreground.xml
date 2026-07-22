@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Original artwork: a simple black spade on white, drawn for monochrome
+     displays. Not derived from any Apple asset. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#000000"
+        android:pathData="M54,26 C46,38 34,46 34,57 C34,64 39,69 46,69 C49,69 51.5,68 53,66.5 C52,72 50,76 46,80 L62,80 C58,76 56,72 55,66.5 C56.5,68 59,69 62,69 C69,69 74,64 74,57 C74,46 62,38 54,26 Z" />
+</vector>
