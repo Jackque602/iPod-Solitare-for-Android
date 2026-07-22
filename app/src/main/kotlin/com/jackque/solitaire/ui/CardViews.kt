@@ -33,9 +33,10 @@ import com.jackque.solitaire.engine.settings.SuitStyle
  * All card artwork is original and drawn with plain shapes and text for a
  * 1-bit monochrome display. "Red" suits (hearts/diamonds) are distinguished
  * without color, in the player's choice of style:
- *  - INVERTED: red suits drawn white-on-black - survives 1-bit e-ink, default
+ *  - INVERTED: the whole red card is black with white markings - survives
+ *    1-bit e-ink at any size, default
  *  - OUTLINE: red suit symbols are hollow outlines
- *  - LETTERS: S/H/D/C letters, red ones white-on-black
+ *  - LETTERS: S/H/D/C letters, red ones on a white-on-black badge
  *  - FILLED:  every suit solid (for regular LCDs)
  */
 object CardDesign {
@@ -47,20 +48,26 @@ private fun suitText(suit: Suit, style: SuitStyle): String = when (style) {
     else -> suit.symbol.toString()
 }
 
-/** White-on-black badge for red suits in INVERTED/LETTERS styles. */
-private fun isInverted(suit: Suit, style: SuitStyle): Boolean =
-    (style == SuitStyle.INVERTED || style == SuitStyle.LETTERS) && suit.isRed
+/** White-on-black letter badge for red suits in the LETTERS style. */
+private fun isBadged(suit: Suit, style: SuitStyle): Boolean =
+    style == SuitStyle.LETTERS && suit.isRed
 
 /** Hollow glyphs for red suits in the OUTLINE style. */
 private fun isHollow(suit: Suit, style: SuitStyle): Boolean =
     style == SuitStyle.OUTLINE && suit.isRed
 
 @Composable
-private fun SuitGlyph(suit: Suit, style: SuitStyle, size: TextUnit, bold: Boolean = true) {
+private fun SuitGlyph(
+    suit: Suit,
+    style: SuitStyle,
+    size: TextUnit,
+    ink: Color = Color.Black,
+    bold: Boolean = true,
+) {
     val weight = if (bold) FontWeight.Bold else FontWeight.Normal
     val text = suitText(suit, style)
     when {
-        isInverted(suit, style) -> {
+        isBadged(suit, style) -> {
             Box(
                 modifier = Modifier
                     .background(Color.Black, RoundedCornerShape(25))
@@ -83,7 +90,7 @@ private fun SuitGlyph(suit: Suit, style: SuitStyle, size: TextUnit, bold: Boolea
             Text(
                 text = text,
                 style = TextStyle(
-                    color = Color.Black,
+                    color = ink,
                     fontSize = size,
                     fontWeight = weight,
                     drawStyle = Stroke(width = strokeWidth),
@@ -93,7 +100,7 @@ private fun SuitGlyph(suit: Suit, style: SuitStyle, size: TextUnit, bold: Boolea
         }
         else -> Text(
             text = text,
-            color = Color.Black,
+            color = ink,
             fontSize = size,
             fontWeight = weight,
             maxLines = 1,
@@ -112,6 +119,11 @@ fun CardFace(
     val rankSize = (width.value * 0.34f).sp
     val smallSuit = (width.value * 0.30f).sp
     val bigSuit = (width.value * 0.52f).sp
+    // In the INVERTED style the entire red card face is filled black with
+    // white markings. A thin white rim stays between the fill and the card
+    // border so stacked cards and the black cursor outline remain visible.
+    val invertedCard = suitStyle == SuitStyle.INVERTED && card.isRed
+    val ink = if (invertedCard) Color.White else Color.Black
     Box(
         modifier = modifier
             .width(width)
@@ -120,25 +132,34 @@ fun CardFace(
             .background(Color.White)
             .border(1.5.dp, Color.Black, CardDesign.corner),
     ) {
+        if (invertedCard) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(2.5.dp)
+                    .clip(RoundedCornerShape(15))
+                    .background(Color.Black),
+            )
+        }
         Column(
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .padding(start = 3.dp, top = 1.dp),
+                .padding(start = 4.dp, top = 2.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
                 text = card.rank.label,
-                color = Color.Black,
+                color = ink,
                 fontSize = rankSize,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
             )
-            SuitGlyph(card.suit, suitStyle, smallSuit)
+            SuitGlyph(card.suit, suitStyle, smallSuit, ink)
         }
         Box(
-            modifier = Modifier.align(Alignment.BottomEnd).padding(end = 4.dp, bottom = 2.dp),
+            modifier = Modifier.align(Alignment.BottomEnd).padding(end = 5.dp, bottom = 3.dp),
         ) {
-            SuitGlyph(card.suit, suitStyle, bigSuit)
+            SuitGlyph(card.suit, suitStyle, bigSuit, ink)
         }
     }
 }

@@ -206,6 +206,28 @@ private fun Modifier.selectionHighlight(show: Boolean): Modifier =
 private fun TopRow(s: UiState.Game, vm: GameViewModel, cardW: Dp, cardH: Dp, gap: Dp) {
     val state = s.state
     Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
+        // Foundations (the "ace shelf") on the left, aligned with tableau 0..3.
+        val sel = s.selection
+        for (f in 0..3) {
+            val top = state.foundations[f].lastOrNull()
+            val isCursor = s.cursor.zone == Zone.FOUNDATION && s.cursor.index == f
+            val isSelected = sel != null && sel.zone == Zone.FOUNDATION && sel.index == f
+            Box(
+                modifier = Modifier
+                    .testTag("foundation$f")
+                    .cursorHighlight(isCursor)
+                    .selectionHighlight(isSelected)
+                    .tap { vm.onZoneTap(Cursor(Zone.FOUNDATION, f)) },
+            ) {
+                if (top != null) {
+                    CardFace(top, cardW, cardH, s.settings.suitStyle)
+                } else {
+                    EmptySlot(cardW, cardH, label = "A")
+                }
+            }
+        }
+        // Gap column keeps the deck right-aligned with tableau 5..6.
+        Spacer(Modifier.width(cardW))
         // Stock
         val stockCursor = s.cursor.zone == Zone.STOCK
         Box(
@@ -252,28 +274,6 @@ private fun TopRow(s: UiState.Game, vm: GameViewModel, cardW: Dp, cardH: Dp, gap
                 CardFace(wasteTop, cardW, cardH, s.settings.suitStyle)
             } else {
                 EmptySlot(cardW, cardH)
-            }
-        }
-        // Gap column keeps foundations right-aligned with tableau 3..6.
-        Spacer(Modifier.width(cardW))
-        // Foundations
-        val sel = s.selection
-        for (f in 0..3) {
-            val top = state.foundations[f].lastOrNull()
-            val isCursor = s.cursor.zone == Zone.FOUNDATION && s.cursor.index == f
-            val isSelected = sel != null && sel.zone == Zone.FOUNDATION && sel.index == f
-            Box(
-                modifier = Modifier
-                    .testTag("foundation$f")
-                    .cursorHighlight(isCursor)
-                    .selectionHighlight(isSelected)
-                    .tap { vm.onZoneTap(Cursor(Zone.FOUNDATION, f)) },
-            ) {
-                if (top != null) {
-                    CardFace(top, cardW, cardH, s.settings.suitStyle)
-                } else {
-                    EmptySlot(cardW, cardH, label = "A")
-                }
             }
         }
     }

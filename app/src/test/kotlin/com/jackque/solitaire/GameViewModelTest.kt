@@ -212,15 +212,22 @@ class GameViewModelTest {
     }
 
     @Test
+    fun `fresh installs deal draw three by default`() {
+        val store = FakeSolitaireStore()
+        val vm = createVm(store)
+        assertEquals(DrawMode.DRAW_THREE, game(vm).state.drawMode)
+    }
+
+    @Test
     fun `draw mode setting applies to the next deal`() {
         val store = FakeSolitaireStore()
         val vm = createVm(store)
-        vm.onDrawModeChanged(DrawMode.DRAW_THREE)
+        vm.onDrawModeChanged(DrawMode.DRAW_ONE)
         run()
-        assertEquals("current deal keeps its mode", DrawMode.DRAW_ONE, game(vm).state.drawMode)
+        assertEquals("current deal keeps its mode", DrawMode.DRAW_THREE, game(vm).state.drawMode)
         vm.onNewGameRequested(restart = false)
         run()
-        assertEquals(DrawMode.DRAW_THREE, game(vm).state.drawMode)
-        assertEquals(DrawMode.DRAW_THREE, store.settings.drawMode)
+        assertEquals(DrawMode.DRAW_ONE, game(vm).state.drawMode)
+        assertEquals(DrawMode.DRAW_ONE, store.settings.drawMode)
     }
 }

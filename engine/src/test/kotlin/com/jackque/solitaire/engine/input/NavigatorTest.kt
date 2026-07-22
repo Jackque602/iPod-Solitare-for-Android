@@ -18,15 +18,20 @@ class NavigatorTest {
 
     @Test
     fun `horizontal movement wraps within each row`() {
-        var c = Cursor(Zone.STOCK)
+        // Top row: foundations 0-3, then stock, then waste.
+        var c = Cursor(Zone.FOUNDATION, 0)
+        repeat(3) { c = Navigator.move(dealt, c, Direction.RIGHT) }
+        assertEquals(Cursor(Zone.FOUNDATION, 3), c)
+        c = Navigator.move(dealt, c, Direction.RIGHT)
+        assertEquals(Zone.STOCK, c.zone)
         c = Navigator.move(dealt, c, Direction.RIGHT)
         assertEquals(Zone.WASTE, c.zone)
-        repeat(4) { c = Navigator.move(dealt, c, Direction.RIGHT) }
-        assertEquals(Cursor(Zone.FOUNDATION, 3), c)
         c = Navigator.move(dealt, c, Direction.RIGHT)
-        assertEquals(Zone.STOCK, c.zone, "wraps back to the stock")
+        assertEquals(Cursor(Zone.FOUNDATION, 0), c, "wraps back to the first foundation")
         c = Navigator.move(dealt, c, Direction.LEFT)
-        assertEquals(Cursor(Zone.FOUNDATION, 3), c)
+        assertEquals(Zone.WASTE, c.zone)
+        c = Navigator.move(dealt, c, Direction.LEFT)
+        assertEquals(Zone.STOCK, c.zone)
 
         var t = Cursor(Zone.TABLEAU, 6)
         t = Navigator.move(dealt, t, Direction.RIGHT)
@@ -36,20 +41,32 @@ class NavigatorTest {
     @Test
     fun `vertical movement keeps columns aligned`() {
         assertEquals(
-            Cursor(Zone.TABLEAU, 0),
+            Cursor(Zone.TABLEAU, 5),
             Navigator.move(dealt, Cursor(Zone.STOCK), Direction.DOWN),
         )
         assertEquals(
-            Cursor(Zone.TABLEAU, 5),
+            Cursor(Zone.TABLEAU, 6),
+            Navigator.move(dealt, Cursor(Zone.WASTE), Direction.DOWN),
+        )
+        assertEquals(
+            Cursor(Zone.TABLEAU, 2),
             Navigator.move(dealt, Cursor(Zone.FOUNDATION, 2), Direction.DOWN),
         )
         assertEquals(
-            Cursor(Zone.STOCK),
+            Cursor(Zone.FOUNDATION, 0),
             Navigator.move(dealt, Cursor(Zone.TABLEAU, 0), Direction.UP),
         )
         assertEquals(
-            Cursor(Zone.FOUNDATION, 1),
+            Cursor(Zone.STOCK),
             Navigator.move(dealt, Cursor(Zone.TABLEAU, 4), Direction.UP),
+        )
+        assertEquals(
+            Cursor(Zone.STOCK),
+            Navigator.move(dealt, Cursor(Zone.TABLEAU, 5), Direction.UP),
+        )
+        assertEquals(
+            Cursor(Zone.WASTE),
+            Navigator.move(dealt, Cursor(Zone.TABLEAU, 6), Direction.UP),
         )
     }
 

@@ -37,7 +37,7 @@ data class AppSettings(
      * lets [AppSettingsCodec] tell them apart from current ones.
      */
     val version: Int = 1,
-    val drawMode: DrawMode = DrawMode.DRAW_ONE,
+    val drawMode: DrawMode = DrawMode.DRAW_THREE,
     /** E-Ink mode is the default: no animations, maximum contrast, minimal redraws. */
     val eInkMode: Boolean = true,
     val suitStyle: SuitStyle = SuitStyle.INVERTED,
@@ -45,7 +45,7 @@ data class AppSettings(
     val keyBindings: KeyBindings = KeyBindings.defaults(),
 ) {
     companion object {
-        const val CURRENT_VERSION = 2
+        const val CURRENT_VERSION = 3
     }
 }
 
@@ -70,15 +70,20 @@ object AppSettingsCodec {
     }
 
     /**
-     * Version 1 -> 2: OUTLINE was the original default but proved
-     * indistinguishable from solid glyphs on real 1-bit e-ink panels, so
-     * v1 files still on it are moved to the new INVERTED default. Users
-     * who pick OUTLINE again afterwards keep it (their file says v2).
+     * Migrations move files still on an old default to the new default
+     * while preserving choices made after the default changed (their file
+     * carries the newer version number).
+     * - v1 -> v2: OUTLINE proved indistinguishable from solid glyphs on
+     *   real 1-bit e-ink panels; move to INVERTED.
+     * - v2 -> v3: the default draw mode changed to DRAW_THREE.
      */
     private fun migrate(settings: AppSettings): AppSettings {
         var result = settings
         if (result.version < 2 && result.suitStyle == SuitStyle.OUTLINE) {
             result = result.copy(suitStyle = SuitStyle.INVERTED)
+        }
+        if (result.version < 3 && result.drawMode == DrawMode.DRAW_ONE) {
+            result = result.copy(drawMode = DrawMode.DRAW_THREE)
         }
         return result.copy(version = AppSettings.CURRENT_VERSION)
     }

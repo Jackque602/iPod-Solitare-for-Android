@@ -21,9 +21,10 @@ select a destination.
 ## Keyboard (Minimal Phone QWERTY)
 
 A cursor (thick black border) marks the active pile. The top row is
-stock → waste → foundations; the bottom row is the seven tableau columns.
-Vertical movement keeps your column; on a tableau column, **UP first
-extends the picked-up run** one card at a time before leaving the column.
+foundations (the ace shelf) on the left, then the stock and waste on the
+right; the bottom row is the seven tableau columns. Vertical movement
+keeps your column; on a tableau column, **UP first extends the picked-up
+run** one card at a time before leaving the column.
 
 Default bindings (every one can be changed):
 

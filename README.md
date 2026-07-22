@@ -9,9 +9,10 @@ All artwork and code are original. Nothing is copied from Apple.
 
 ## Features
 
-- **Klondike Solitaire** with Draw 1 and Draw 3 modes and full rule
-  validation (alternating colors descending on the tableau, ace-to-king
-  single-suit foundations, kings-only on empty columns, movable runs).
+- **Klondike Solitaire** with Draw 3 (default) and Draw 1 modes and full
+  rule validation (alternating colors descending on the tableau,
+  ace-to-king single-suit foundations, kings-only on empty columns,
+  movable runs).
 - **Original iPod money scoring**: every new deal costs $52, every card
   moved to a foundation earns $5, a finished game nets exactly **+$208**.
   The score is cumulative forever, may go negative, and is purely a score —
@@ -27,9 +28,9 @@ All artwork and code are original. Nothing is copied from Apple.
   regions, a coarse-by-default timer, and a manual **full-refresh** button
   to clear ghosting.
 - **Monochrome card design** with four accessibility options for telling
-  the "red" suits apart without color: inverted white-on-black suit
-  symbols (default, unmistakable on 1-bit e-ink), outlined symbols, suit
-  letters, or all-filled.
+  the "red" suits apart without color: fully inverted red cards - black
+  face, white markings (default, unmistakable on 1-bit e-ink), outlined
+  symbols, suit letters, or all-filled.
 - **Full keyboard play** on the Minimal Phone's QWERTY with configurable
   bindings for every action. See [docs/CONTROLS.md](docs/CONTROLS.md).
 - **Statistics**: cumulative score with high/low water marks, wins, losses,

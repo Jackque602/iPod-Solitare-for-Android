@@ -36,7 +36,7 @@ data class Activation(
 
 /**
  * Pure cursor-navigation and selection model. The top row lays out as
- * columns 0..6: stock, waste, (gap), foundations 0-3; the tableau row has
+ * columns 0..6: foundations 0-3, (gap), stock, waste; the tableau row has
  * columns 0..6. Vertical movement keeps the horizontal column aligned.
  */
 object Navigator {
@@ -62,15 +62,15 @@ object Navigator {
         (faceUpRunLength(state, column) - 1).coerceAtLeast(0)
 
     private fun topSlotForColumn(column: Int): Cursor = when (column) {
-        0 -> Cursor(Zone.STOCK)
-        1, 2 -> Cursor(Zone.WASTE)
-        else -> Cursor(Zone.FOUNDATION, column - 3)
+        0, 1, 2, 3 -> Cursor(Zone.FOUNDATION, column)
+        4, 5 -> Cursor(Zone.STOCK)
+        else -> Cursor(Zone.WASTE)
     }
 
     private fun columnForTopSlot(cursor: Cursor): Int = when (cursor.zone) {
-        Zone.STOCK -> 0
-        Zone.WASTE -> 1
-        Zone.FOUNDATION -> cursor.index + 3
+        Zone.FOUNDATION -> cursor.index
+        Zone.STOCK -> 5
+        Zone.WASTE -> 6
         Zone.TABLEAU -> cursor.index
     }
 
@@ -80,16 +80,16 @@ object Navigator {
             if (cursor.zone == Zone.TABLEAU) {
                 Cursor(Zone.TABLEAU, (cursor.index + delta + 7) % 7)
             } else {
-                // Top row positions: 0=stock, 1=waste, 2..5=foundations.
+                // Top row positions: 0..3=foundations, 4=stock, 5=waste.
                 val position = when (cursor.zone) {
-                    Zone.STOCK -> 0
-                    Zone.WASTE -> 1
-                    else -> cursor.index + 2
+                    Zone.FOUNDATION -> cursor.index
+                    Zone.STOCK -> 4
+                    else -> 5
                 }
                 when (val next = (position + delta + 6) % 6) {
-                    0 -> Cursor(Zone.STOCK)
-                    1 -> Cursor(Zone.WASTE)
-                    else -> Cursor(Zone.FOUNDATION, next - 2)
+                    4 -> Cursor(Zone.STOCK)
+                    5 -> Cursor(Zone.WASTE)
+                    else -> Cursor(Zone.FOUNDATION, next)
                 }
             }
         }
