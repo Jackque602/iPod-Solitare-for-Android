@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -62,19 +63,20 @@ fun EButton(
     text: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    fontSize: TextUnit = 15.sp,
     onClick: () -> Unit,
 ) {
     Box(
         modifier = modifier
             .border(1.5.dp, if (enabled) Color.Black else Color.Gray)
             .tap(enabled = enabled, onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 10.dp),
+            .padding(horizontal = 10.dp, vertical = 10.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = text,
             color = if (enabled) Color.Black else Color.Gray,
-            fontSize = 15.sp,
+            fontSize = fontSize,
             fontWeight = FontWeight.Medium,
             maxLines = 1,
         )

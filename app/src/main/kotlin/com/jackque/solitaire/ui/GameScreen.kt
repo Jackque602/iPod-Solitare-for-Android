@@ -13,12 +13,16 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -43,6 +47,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jackque.solitaire.DialogState
@@ -83,16 +88,31 @@ private fun GameScreen(s: UiState.Game, vm: GameViewModel) {
     }
     BackHandler(enabled = s.selection != null) { vm.onCancelSelection() }
 
-    Column(
+    // safeDrawing keeps the board clear of system bars and display
+    // cutouts - e.g. the camera lenses that intrude into the Motorola
+    // Razr cover display.
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
+            .windowInsetsPadding(WindowInsets.safeDrawing)
             .focusRequester(focusRequester)
             .focusable()
             .onKeyEvent { event ->
                 if (event.type == KeyEventType.KeyDown) vm.onKey(keyNameOf(event)) else false
             },
     ) {
+        when (layoutModeFor(maxWidth.value, maxHeight.value)) {
+            LayoutMode.TALL -> TallLayout(s, vm)
+            LayoutMode.COMPACT -> CompactLayout(s, vm)
+        }
+    }
+}
+
+/** Classic portrait phone layout. */
+@Composable
+private fun TallLayout(s: UiState.Game, vm: GameViewModel) {
+    Column(Modifier.fillMaxSize()) {
         StatusBar(s, vm)
         MessageLine(s.statusMessage)
         BoxWithConstraints(
@@ -108,14 +128,129 @@ private fun GameScreen(s: UiState.Game, vm: GameViewModel) {
             Column {
                 TopRow(s, vm, cardW, cardH, gap)
                 Spacer(Modifier.height(10.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
-                    for (col in 0..6) {
-                        TableauColumn(col, s, vm, cardW, cardH, tableauAvailable)
-                    }
-                }
+                BoardColumns(s, vm, cardW, cardH, gap, tableauAvailable)
             }
         }
         BottomBar(s, vm)
+    }
+}
+
+/**
+ * Near-square/wide screens (Motorola Razr cover display, landscape
+ * phones): one slim status line, the board sized by height as well as
+ * width, and the action buttons in a vertical rail on the right.
+ */
+@Composable
+private fun CompactLayout(s: UiState.Game, vm: GameViewModel) {
+    Column(Modifier.fillMaxSize()) {
+        CompactStatusBar(s)
+        Row(Modifier.fillMaxWidth().weight(1f)) {
+            BoxWithConstraints(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .padding(horizontal = 4.dp),
+            ) {
+                val gap = 3.dp
+                val cardWByWidth = (maxWidth - gap * 6) / 7
+                val cardHByHeight = maxHeight * 0.27f
+                val cardH = min(cardWByWidth * 1.42f, cardHByHeight)
+                val cardW = cardH / 1.42f
+                val tableauAvailable = maxHeight - cardH - 6.dp
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+                    Column {
+                        TopRow(s, vm, cardW, cardH, gap)
+                        Spacer(Modifier.height(6.dp))
+                        BoardColumns(s, vm, cardW, cardH, gap, tableauAvailable)
+                    }
+                }
+            }
+            ActionRail(s, vm)
+        }
+    }
+}
+
+@Composable
+private fun BoardColumns(
+    s: UiState.Game,
+    vm: GameViewModel,
+    cardW: Dp,
+    cardH: Dp,
+    gap: Dp,
+    tableauAvailable: Dp,
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
+        for (col in 0..6) {
+            TableauColumn(col, s, vm, cardW, cardH, tableauAvailable)
+        }
+    }
+}
+
+/** One-line chrome for compact screens; the menu button lives in the rail. */
+@Composable
+private fun CompactStatusBar(s: UiState.Game) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(30.dp)
+            .padding(horizontal = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(
+            text = moneyText(s.bank),
+            modifier = Modifier.testTag("bank"),
+            color = Color.Black,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+        )
+        Text(
+            text = s.statusMessage ?: buildString {
+                append("Moves ${s.state.moveCount}")
+                if (s.timerText.isNotEmpty()) append("  ·  ${s.timerText}")
+            },
+            modifier = Modifier.testTag("message"),
+            color = Color.Black,
+            fontSize = 13.sp,
+            maxLines = 1,
+        )
+    }
+}
+
+@Composable
+private fun ActionRail(s: UiState.Game, vm: GameViewModel) {
+    Column(
+        modifier = Modifier
+            .width(84.dp)
+            .fillMaxHeight()
+            .padding(start = 2.dp, end = 4.dp, bottom = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(5.dp),
+    ) {
+        EButton("Menu", Modifier.fillMaxWidth().testTag("menu"), fontSize = 13.sp) {
+            vm.openDialog(DialogState.Menu)
+        }
+        EButton(
+            "Undo",
+            Modifier.fillMaxWidth().testTag("btn_undo"),
+            enabled = s.canUndo,
+            fontSize = 13.sp,
+            onClick = vm::onUndo,
+        )
+        EButton("Hint", Modifier.fillMaxWidth().testTag("btn_hint"), fontSize = 13.sp, onClick = vm::onHint)
+        if (s.autoCompleteAvailable) {
+            EButton("Auto", Modifier.fillMaxWidth().testTag("btn_auto"), fontSize = 13.sp, onClick = vm::onAutoComplete)
+        } else {
+            EButton(
+                "Draw",
+                Modifier.fillMaxWidth().testTag("btn_draw"),
+                enabled = s.state.stock.isNotEmpty() || s.state.waste.isNotEmpty(),
+                fontSize = 13.sp,
+                onClick = vm::onDraw,
+            )
+        }
+        if (s.settings.eInkMode) {
+            EButton("Refresh", Modifier.fillMaxWidth().testTag("btn_refresh"), fontSize = 13.sp, onClick = vm::onFullRefresh)
+        }
     }
 }
 

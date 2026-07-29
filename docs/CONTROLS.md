@@ -17,6 +17,9 @@ select a destination.
 - **Bottom bar**: Undo · Hint · Draw/Auto · Refresh (e-ink mode).
 - **Menu** (top-right): new game, restart deal, seed entry, draw mode,
   statistics, settings, controls, full refresh.
+- On near-square or wide screens (e.g. the Motorola Razr cover display)
+  the same buttons move into a vertical rail on the right edge and the
+  status line shrinks to a single row.
 
 ## Keyboard (Minimal Phone QWERTY)
 

@@ -33,6 +33,10 @@ All artwork and code are original. Nothing is copied from Apple.
   symbols, suit letters, or all-filled.
 - **Full keyboard play** on the Minimal Phone's QWERTY with configurable
   bindings for every action. See [docs/CONTROLS.md](docs/CONTROLS.md).
+- **Adaptive layout**: the classic portrait board on tall screens, and a
+  compact layout with a vertical action rail for near-square or wide
+  screens such as the Motorola Razr cover display - with safe-area
+  insets keeping the board clear of its camera cutouts.
 - **Statistics**: cumulative score with high/low water marks, wins, losses,
   streaks, moves, time, foundation cards, best/worst/average game score,
   per-game history, and JSON export/import.
