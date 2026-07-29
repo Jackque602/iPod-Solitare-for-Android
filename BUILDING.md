@@ -49,9 +49,16 @@ logic:
 
 `.github/workflows/build.yml` runs the engine tests, the app unit tests
 and assembles the debug APK on every push; the APK is attached to the
-workflow run as the `solitaire-debug-apk` artifact. The Compose UI test
-job runs on an emulator when the workflow is started manually
-(*Actions → Build & Test → Run workflow*).
+workflow run as the `solitaire-debug-apk` artifact and also published to
+the rolling `latest` release, giving a stable direct download link that
+needs no GitHub login (handy on a phone):
+
+```
+https://github.com/Jackque602/iPod-Solitare-for-Android/releases/latest/download/app-debug.apk
+```
+
+The Compose UI test job runs on an emulator when the workflow is started
+manually (*Actions → Build & Test → Run workflow*).
 
 ## Reproducible deals
 
