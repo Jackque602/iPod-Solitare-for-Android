@@ -86,7 +86,12 @@ private fun GameScreen(s: UiState.Game, vm: GameViewModel) {
     LaunchedEffect(s.dialog) {
         if (s.dialog == null) focusRequester.requestFocus()
     }
-    BackHandler(enabled = s.selection != null) { vm.onCancelSelection() }
+    // The system back button/gesture first drops an active selection,
+    // then undoes moves one at a time; with nothing left to undo it
+    // falls through to the system and leaves the app.
+    BackHandler(enabled = s.selection != null || s.canUndo) {
+        if (s.selection != null) vm.onCancelSelection() else vm.onUndo()
+    }
 
     // safeDrawing keeps the board clear of system bars and display
     // cutouts - e.g. the camera lenses that intrude into the Motorola

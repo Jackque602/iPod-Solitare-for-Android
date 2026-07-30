@@ -19,8 +19,9 @@ import com.jackque.solitaire.engine.input.Zone
 import com.jackque.solitaire.engine.settings.AppSettings
 import com.jackque.solitaire.engine.settings.SuitStyle
 import com.jackque.solitaire.engine.settings.TimerDetail
+import com.jackque.solitaire.engine.backup.BackupCodec
+import com.jackque.solitaire.engine.backup.BackupData
 import com.jackque.solitaire.engine.stats.Statistics
-import com.jackque.solitaire.engine.stats.StatisticsCodec
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -353,16 +354,54 @@ class GameViewModel(
     }
 
     // ------------------------------------------------------------------
-    // Statistics export / import
+    // Gameplay data export / import
     // ------------------------------------------------------------------
 
-    fun exportStatisticsJson(): String? = session?.let { StatisticsCodec.encode(it.stats) }
+    /**
+     * Everything worth carrying to another device: statistics (with the
+     * bank), settings, and the deal in progress including its move log,
+     * so the position, undo history and score restore exactly.
+     */
+    fun exportBackupJson(): String? {
+        val s = session ?: return null
+        return BackupCodec.encode(
+            BackupData(
+                statistics = s.stats,
+                settings = settings,
+                savedGame = if (s.isWon) null else s.toSavedGame(),
+            )
+        )
+    }
 
-    fun importStatisticsJson(text: String): Boolean {
-        val s = session ?: return false
-        val imported = StatisticsCodec.decode(text) ?: return false
-        s.importStatistics(imported)
-        viewModelScope.launch { store.saveStatistics(s.stats) }
+    /**
+     * Replace the app's data with an imported backup. Accepts both full
+     * backups and the older statistics-only export format (which keeps
+     * the current deal and only swaps the statistics). No buy-in is
+     * charged for a restored in-progress deal - it was paid when that
+     * deal originally started.
+     */
+    fun importBackupJson(text: String): Boolean {
+        val current = session ?: return false
+        val backup = BackupCodec.decode(text) ?: return false
+        backup.settings?.let { imported ->
+            settings = imported
+            viewModelScope.launch { store.saveSettings(imported) }
+        }
+        if (backup.savedGame != null) {
+            session = SolitaireSession.start(
+                stats = backup.statistics,
+                savedGame = backup.savedGame,
+                newSeed = seedSource(),
+                drawMode = settings.drawMode,
+                timestampMillis = clock(),
+            )
+        } else {
+            current.importStatistics(backup.statistics)
+        }
+        selection = null
+        cursor = Cursor(Zone.STOCK)
+        clearMessage()
+        persist()
         publish()
         return true
     }

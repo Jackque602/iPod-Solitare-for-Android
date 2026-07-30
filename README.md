@@ -39,7 +39,10 @@ All artwork and code are original. Nothing is copied from Apple.
   insets keeping the board clear of its camera cutouts.
 - **Statistics**: cumulative score with high/low water marks, wins, losses,
   streaks, moves, time, foundation cards, best/worst/average game score,
-  per-game history, and JSON export/import.
+  and per-game history.
+- **Gameplay data export/import**: one JSON file backs up statistics,
+  settings and the deal in progress (with its full undo history); import
+  restores it exactly - on the same phone or a different one.
 
 ## Project layout
 

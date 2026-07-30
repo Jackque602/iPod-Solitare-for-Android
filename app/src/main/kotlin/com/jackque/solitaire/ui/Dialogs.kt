@@ -219,13 +219,13 @@ private fun StatsDialog(s: UiState.Game, vm: GameViewModel) {
         ActivityResultContracts.CreateDocument("application/json"),
     ) { uri ->
         if (uri != null) {
-            val json = vm.exportStatisticsJson()
+            val json = vm.exportBackupJson()
             if (json != null) {
                 try {
                     context.contentResolver.openOutputStream(uri)?.use { stream ->
                         stream.write(json.toByteArray(Charsets.UTF_8))
                     }
-                    vm.notify("Statistics exported")
+                    vm.notify("Gameplay data exported")
                 } catch (e: Exception) {
                     vm.notify("Export failed")
                 }
@@ -239,10 +239,10 @@ private fun StatsDialog(s: UiState.Game, vm: GameViewModel) {
             try {
                 val text = context.contentResolver.openInputStream(uri)
                     ?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }
-                if (text != null && vm.importStatisticsJson(text)) {
-                    vm.notify("Statistics imported")
+                if (text != null && vm.importBackupJson(text)) {
+                    vm.notify("Gameplay data imported")
                 } else {
-                    vm.notify("Import failed: not a valid statistics file")
+                    vm.notify("Import failed: not a valid backup file")
                 }
             } catch (e: Exception) {
                 vm.notify("Import failed")
@@ -292,9 +292,16 @@ private fun StatsDialog(s: UiState.Game, vm: GameViewModel) {
                 )
             }
         }
-        Spacer(Modifier.height(10.dp))
-        MenuItem("Export…") { exportLauncher.launch("solitaire-statistics.json") }
-        MenuItem("Import…") { importLauncher.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) }
+        Spacer(Modifier.height(8.dp))
+        Text(
+            "Export saves statistics, settings and the deal in progress " +
+                "to a file; import replaces them with a previously exported file.",
+            color = Color.Black,
+            fontSize = 12.sp,
+        )
+        Spacer(Modifier.height(6.dp))
+        MenuItem("Export Gameplay Data…") { exportLauncher.launch("solitaire-backup.json") }
+        MenuItem("Import Gameplay Data…") { importLauncher.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) }
         MenuItem("Close") { vm.closeDialog() }
     }
 }

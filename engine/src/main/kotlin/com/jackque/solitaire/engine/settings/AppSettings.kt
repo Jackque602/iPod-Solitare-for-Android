@@ -77,7 +77,7 @@ object AppSettingsCodec {
      *   real 1-bit e-ink panels; move to INVERTED.
      * - v2 -> v3: the default draw mode changed to DRAW_THREE.
      */
-    private fun migrate(settings: AppSettings): AppSettings {
+    internal fun migrate(settings: AppSettings): AppSettings {
         var result = settings
         if (result.version < 2 && result.suitStyle == SuitStyle.OUTLINE) {
             result = result.copy(suitStyle = SuitStyle.INVERTED)

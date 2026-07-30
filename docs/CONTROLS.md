@@ -14,6 +14,9 @@ select a destination.
   that card down.
 - **Double-tap** a card (waste or tableau top) to send it straight to a
   foundation when legal.
+- **Back button / back gesture**: cancels the current selection if one is
+  active, otherwise **undoes the last move**. When there is nothing left
+  to undo, back leaves the app as usual.
 - **Bottom bar**: Undo · Hint · Draw/Auto · Refresh (e-ink mode).
 - **Menu** (top-right): new game, restart deal, seed entry, draw mode,
   statistics, settings, controls, full refresh.

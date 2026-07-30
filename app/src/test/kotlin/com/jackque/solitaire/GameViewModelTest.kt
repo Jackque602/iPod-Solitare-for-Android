@@ -157,20 +157,39 @@ class GameViewModelTest {
     }
 
     @Test
-    fun `statistics export and import roundtrip`() {
-        val store = FakeSolitaireStore()
-        val vm = createVm(store)
-        val exported = vm.exportStatisticsJson()
+    fun `backup export and import restore the game position and undo history`() {
+        val vm = createVm(FakeSolitaireStore())
+        vm.onDraw()
+        run()
+        val exported = vm.exportBackupJson()
         assertNotNull(exported)
-        assertNotNull(StatisticsCodec.decode(exported!!))
+        val bank = game(vm).bank
+        val moves = game(vm).state.moveCount
 
-        val imported = Statistics(bank = 416, wins = 2, highestBank = 500)
-        assertTrue(vm.importStatisticsJson(StatisticsCodec.encode(imported)))
+        // Import into a completely separate install.
+        val otherStore = FakeSolitaireStore()
+        val other = createVm(otherStore)
+        assertTrue(other.importBackupJson(exported!!))
+        run()
+        assertEquals(bank, game(other).bank)
+        assertEquals(moves, game(other).state.moveCount)
+        assertTrue("undo history survives import", game(other).canUndo)
+        assertNotNull("import persists the restored game", otherStore.savedGame)
+    }
+
+    @Test
+    fun `legacy statistics-only files import and keep the current deal`() {
+        val vm = createVm(FakeSolitaireStore())
+        vm.onDraw()
+        run()
+        val movesBefore = game(vm).state.moveCount
+        val legacy = StatisticsCodec.encode(Statistics(bank = 416, wins = 2, highestBank = 500))
+        assertTrue(vm.importBackupJson(legacy))
         run()
         assertEquals(416L, game(vm).bank)
-        assertEquals(2, store.statistics.wins)
+        assertEquals("stats-only import keeps the deal in progress", movesBefore, game(vm).state.moveCount)
 
-        assertFalse(vm.importStatisticsJson("not json"))
+        assertFalse(vm.importBackupJson("not json"))
     }
 
     @Test
