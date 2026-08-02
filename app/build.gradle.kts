@@ -18,6 +18,19 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        // Shared, committed debug keystore: every build (local or CI)
+        // signs identically, so newer debug APKs always install over
+        // older ones. This key protects nothing and is intentionally
+        // public - it is only ever used for sideloaded debug builds.
+        getByName("debug") {
+            storeFile = rootProject.file("signing/debug.keystore")
+            storePassword = "android"
+            keyAlias = "solitaire-debug"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false

@@ -60,6 +60,15 @@ https://github.com/Jackque602/iPod-Solitare-for-Android/releases/latest/download
 The Compose UI test job runs on an emulator when the workflow is started
 manually (*Actions → Build & Test → Run workflow*).
 
+## Signing
+
+Debug builds are signed with the committed shared keystore at
+`signing/debug.keystore` (passwords: `android`). This keeps the
+signature identical across every machine and CI run so a newer debug
+APK always installs over an older one. The key is deliberately public
+and protects nothing; for a Play Store release, create a private
+keystore and a proper `release` signing config instead.
+
 ## Reproducible deals
 
 Shuffles are driven by a self-contained SplitMix64 PRNG inside the engine
