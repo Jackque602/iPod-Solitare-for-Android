@@ -100,4 +100,19 @@ object Achievements {
     fun foundationConfiguration(state: GameState): String? =
         if (!state.isWon) null
         else state.foundations.joinToString("") { it.first().suit.letter.toString() }
+
+    /**
+     * All 24 possible foundation suit orders in a stable display order:
+     * grouped by the leading suit (S, H, D, C), then by the remaining
+     * suits in that same order. The Grand Tour progress view renders
+     * exactly this list.
+     */
+    fun allFoundationConfigurations(): List<String> {
+        val suits = listOf('S', 'H', 'D', 'C')
+        val out = mutableListOf<String>()
+        for (a in suits) for (b in suits) for (c in suits) for (d in suits) {
+            if (setOf(a, b, c, d).size == 4) out += "$a$b$c$d"
+        }
+        return out
+    }
 }

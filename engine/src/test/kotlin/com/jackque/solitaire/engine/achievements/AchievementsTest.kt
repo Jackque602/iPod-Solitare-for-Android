@@ -235,6 +235,27 @@ class AchievementsTest {
         assertTrue(session.stats.achievements.aceConfigurationsSeen.isEmpty())
     }
 
+    @Test
+    fun `the configuration catalog lists all 24 orders grouped by leading suit`() {
+        val all = Achievements.allFoundationConfigurations()
+        assertEquals(24, all.size)
+        assertEquals(24, all.toSet().size)
+        assertTrue(all.all { it.length == 4 && it.toSet() == setOf('S', 'H', 'D', 'C') })
+        assertEquals("SHDC", all.first())
+        // Grouped: six S-leading, then six H-leading, then D, then C.
+        assertEquals(
+            listOf('S', 'H', 'D', 'C'),
+            all.chunked(6).map { group -> group.map { it.first() }.distinct().single() },
+        )
+        // Every code a win can produce is present in the catalog.
+        val winnable = allFaceUpFullDeckState()
+        var current = winnable
+        while (!current.isWon) {
+            current = Klondike.apply(current, Klondike.nextAutoCompleteMove(current)!!)!!.state
+        }
+        assertTrue(checkNotNull(Achievements.foundationConfiguration(current)) in all)
+    }
+
     // ---------------- persistence ----------------
 
     @Test

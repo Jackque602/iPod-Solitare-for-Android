@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
@@ -29,9 +30,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
@@ -48,13 +52,16 @@ import com.jackque.solitaire.GameViewModel
 import com.jackque.solitaire.UiState
 import com.jackque.solitaire.engine.DrawMode
 import com.jackque.solitaire.engine.Scoring
+import com.jackque.solitaire.engine.Suit
 import com.jackque.solitaire.engine.achievements.AchievementId
+import com.jackque.solitaire.engine.achievements.Achievements
 import com.jackque.solitaire.engine.achievements.AchievementsState
 import com.jackque.solitaire.engine.input.KeyAction
 import com.jackque.solitaire.engine.settings.SuitStyle
 import com.jackque.solitaire.engine.settings.TimerDetail
 import com.jackque.solitaire.engine.stats.Statistics
 import com.jackque.solitaire.ui.theme.EButton
+import com.jackque.solitaire.ui.theme.tap
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -67,6 +74,7 @@ fun AppDialogs(s: UiState.Game, vm: GameViewModel) {
         is DialogState.Settings -> SettingsDialog(s, vm)
         is DialogState.Stats -> StatsDialog(s, vm)
         is DialogState.Achievements -> AchievementsDialog(s, vm)
+        is DialogState.GrandTour -> GrandTourDialog(s, vm)
         is DialogState.Controls -> ControlsDialog(s, vm)
         is DialogState.Rebind -> RebindDialog(s, vm, d)
         is DialogState.SeedEntry -> SeedDialog(s, vm)
@@ -319,7 +327,13 @@ private fun AchievementsDialog(s: UiState.Game, vm: GameViewModel) {
         val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.US) }
         AchievementId.entries.forEach { id ->
             val unlockedAt = achievements.unlocked[id]
-            Column(Modifier.fillMaxWidth().padding(vertical = 5.dp)) {
+            val isGrandTour = id == AchievementId.ACE_GRAND_TOUR
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .let { if (isGrandTour) it.tap { vm.openDialog(DialogState.GrandTour) } else it }
+                    .padding(vertical = 5.dp),
+            ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = id.title,
@@ -331,9 +345,9 @@ private fun AchievementsDialog(s: UiState.Game, vm: GameViewModel) {
                     Text(
                         text = when {
                             unlockedAt != null -> "★ " + dateFormat.format(Date(unlockedAt))
-                            id == AchievementId.ACE_GRAND_TOUR ->
+                            isGrandTour ->
                                 "${achievements.aceConfigurationsSeen.size} / ${AchievementsState.ACE_CONFIGURATION_TOTAL}"
-                            else -> "Locked"
+                            else -> "Not yet"
                         },
                         color = Color.Black,
                         fontSize = 12.sp,
@@ -345,9 +359,111 @@ private fun AchievementsDialog(s: UiState.Game, vm: GameViewModel) {
                     color = Color.Black,
                     fontSize = 12.sp,
                 )
+                if (isGrandTour) {
+                    Text(
+                        text = "Tap to see all 24 arrangements",
+                        color = Color.Black,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
             }
         }
         Spacer(Modifier.height(8.dp))
+        MenuItem("Close") { vm.closeDialog() }
+    }
+}
+
+/** One suit symbol; red suits get the same inverted badge as on the cards. */
+@Composable
+private fun SuitMark(suit: Suit) {
+    if (suit.isRed) {
+        Box(
+            modifier = Modifier
+                .padding(horizontal = 1.dp)
+                .background(Color.Black, RoundedCornerShape(30))
+                .padding(horizontal = 2.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text("${suit.symbol}", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        }
+    } else {
+        Text(
+            "${suit.symbol}",
+            modifier = Modifier.padding(horizontal = 1.dp),
+            color = Color.Black,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+        )
+    }
+}
+
+/** One of the 24 foundation arrangements: solid + check when collected. */
+@Composable
+private fun ConfigurationTile(code: String, done: Boolean) {
+    val border = if (done) {
+        Modifier.border(2.dp, Color.Black)
+    } else {
+        Modifier.drawBehind {
+            drawRect(
+                color = Color.Black,
+                style = Stroke(
+                    width = 1.dp.toPx(),
+                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 6f)),
+                ),
+            )
+        }
+    }
+    Row(
+        modifier = Modifier
+            .padding(3.dp)
+            .then(border)
+            .padding(horizontal = 5.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        code.forEach { letter -> SuitMark(Suit.fromLetter(letter)) }
+        Text(
+            text = if (done) " ✓" else "  ",
+            color = Color.Black,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+        )
+    }
+}
+
+@Composable
+private fun GrandTourDialog(s: UiState.Game, vm: GameViewModel) {
+    DialogShell(vm, "Grand Tour") {
+        val seen = s.stats.achievements.aceConfigurationsSeen
+        Text(
+            "${seen.size} / ${AchievementsState.ACE_CONFIGURATION_TOTAL} arrangements collected",
+            color = Color.Black,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            "Each tile is a final foundation order, left to right. " +
+                "Solid tiles with a check are collected; dashed tiles are still needed.",
+            color = Color.Black,
+            fontSize = 12.sp,
+        )
+        Spacer(Modifier.height(8.dp))
+        val all = remember { Achievements.allFoundationConfigurations() }
+        all.chunked(6).forEach { group ->
+            // Six arrangements per leading suit, shown as a labeled section.
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Aces led by ", color = Color.Black, fontSize = 12.sp)
+                SuitMark(Suit.fromLetter(group.first().first()))
+            }
+            group.chunked(3).forEach { row ->
+                Row {
+                    row.forEach { code -> ConfigurationTile(code, done = code in seen) }
+                }
+            }
+            Spacer(Modifier.height(6.dp))
+        }
+        MenuItem("Back") { vm.openDialog(DialogState.Achievements) }
         MenuItem("Close") { vm.closeDialog() }
     }
 }

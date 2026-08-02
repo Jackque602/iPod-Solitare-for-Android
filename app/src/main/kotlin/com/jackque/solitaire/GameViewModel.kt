@@ -37,6 +37,8 @@ sealed interface DialogState {
     data object Settings : DialogState
     data object Stats : DialogState
     data object Achievements : DialogState
+    /** Grand Tour detail: the 24-arrangement progress board. */
+    data object GrandTour : DialogState
     data object Controls : DialogState
     /** Key-binding list; [capturing] is the action awaiting its new key. */
     data class Rebind(val capturing: KeyAction? = null) : DialogState
