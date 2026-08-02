@@ -1,6 +1,7 @@
 package com.jackque.solitaire.engine.stats
 
 import com.jackque.solitaire.engine.DrawMode
+import com.jackque.solitaire.engine.achievements.AchievementsState
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
@@ -47,6 +48,7 @@ data class Statistics(
     val worstGameScore: Int? = null,
     val sumGameScores: Long = 0,
     val history: List<CompletedGame> = emptyList(),
+    val achievements: AchievementsState = AchievementsState(),
 ) {
     val gamesCompleted: Int get() = wins + losses
 

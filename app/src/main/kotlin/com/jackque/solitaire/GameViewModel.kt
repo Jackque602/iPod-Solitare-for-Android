@@ -19,6 +19,7 @@ import com.jackque.solitaire.engine.input.Zone
 import com.jackque.solitaire.engine.settings.AppSettings
 import com.jackque.solitaire.engine.settings.SuitStyle
 import com.jackque.solitaire.engine.settings.TimerDetail
+import com.jackque.solitaire.engine.achievements.AchievementId
 import com.jackque.solitaire.engine.backup.BackupCodec
 import com.jackque.solitaire.engine.backup.BackupData
 import com.jackque.solitaire.engine.stats.Statistics
@@ -35,6 +36,7 @@ sealed interface DialogState {
     data object Menu : DialogState
     data object Settings : DialogState
     data object Stats : DialogState
+    data object Achievements : DialogState
     data object Controls : DialogState
     /** Key-binding list; [capturing] is the action awaiting its new key. */
     data class Rebind(val capturing: KeyAction? = null) : DialogState
@@ -64,6 +66,8 @@ sealed interface UiState {
         val statusMessage: String?,
         /** Increment triggers one full black/white e-ink refresh flash. */
         val refreshPulse: Int,
+        /** Achievements earned by the just-won deal, for the win dialog. */
+        val newAchievements: List<AchievementId> = emptyList(),
     ) : UiState
 }
 
@@ -85,6 +89,7 @@ class GameViewModel(
     private var refreshPulse: Int = 0
     private var windowActive: Boolean = true
     private var lastPersistedElapsed: Long = 0
+    private var recentAchievements: List<AchievementId> = emptyList()
 
     init {
         viewModelScope.launch {
@@ -185,7 +190,10 @@ class GameViewModel(
         s.autoCompleteAll(clock())
         selection = null
         cursor = Navigator.clamp(s.state, cursor)
-        if (s.isWon) dialog = DialogState.GameWon
+        if (s.isWon) {
+            dialog = DialogState.GameWon
+            recentAchievements = s.consumeNewlyUnlocked()
+        }
         persist()
         publish()
     }
@@ -211,7 +219,10 @@ class GameViewModel(
         }
         selection = null
         cursor = Navigator.clamp(s.state, cursor)
-        if (result.won) dialog = DialogState.GameWon
+        if (result.won) {
+            dialog = DialogState.GameWon
+            recentAchievements = s.consumeNewlyUnlocked()
+        }
         persist()
         publish()
     }
@@ -254,6 +265,7 @@ class GameViewModel(
         selection = null
         cursor = Cursor(Zone.STOCK)
         dialog = null
+        recentAchievements = emptyList()
         clearMessage()
         persist()
         publish()
@@ -400,6 +412,7 @@ class GameViewModel(
         }
         selection = null
         cursor = Cursor(Zone.STOCK)
+        recentAchievements = emptyList()
         clearMessage()
         persist()
         publish()
@@ -489,6 +502,7 @@ class GameViewModel(
             dialog = dialog,
             statusMessage = statusMessage,
             refreshPulse = refreshPulse,
+            newAchievements = recentAchievements,
         )
     }
 

@@ -48,6 +48,8 @@ import com.jackque.solitaire.GameViewModel
 import com.jackque.solitaire.UiState
 import com.jackque.solitaire.engine.DrawMode
 import com.jackque.solitaire.engine.Scoring
+import com.jackque.solitaire.engine.achievements.AchievementId
+import com.jackque.solitaire.engine.achievements.AchievementsState
 import com.jackque.solitaire.engine.input.KeyAction
 import com.jackque.solitaire.engine.settings.SuitStyle
 import com.jackque.solitaire.engine.settings.TimerDetail
@@ -64,6 +66,7 @@ fun AppDialogs(s: UiState.Game, vm: GameViewModel) {
         is DialogState.Menu -> MenuDialog(s, vm)
         is DialogState.Settings -> SettingsDialog(s, vm)
         is DialogState.Stats -> StatsDialog(s, vm)
+        is DialogState.Achievements -> AchievementsDialog(s, vm)
         is DialogState.Controls -> ControlsDialog(s, vm)
         is DialogState.Rebind -> RebindDialog(s, vm, d)
         is DialogState.SeedEntry -> SeedDialog(s, vm)
@@ -145,6 +148,7 @@ private fun MenuDialog(s: UiState.Game, vm: GameViewModel) {
             vm.closeDialog(); vm.onAutoComplete()
         }
         MenuItem("Statistics", tag = "menu_stats") { vm.openDialog(DialogState.Stats) }
+        MenuItem("Achievements") { vm.openDialog(DialogState.Achievements) }
         MenuItem("Settings") { vm.openDialog(DialogState.Settings) }
         MenuItem("Controls") { vm.openDialog(DialogState.Controls) }
         if (s.settings.eInkMode) {
@@ -309,6 +313,46 @@ private fun StatsDialog(s: UiState.Game, vm: GameViewModel) {
 private fun money(value: Int): String = if (value < 0) "-$${-value}" else "+$$value"
 
 @Composable
+private fun AchievementsDialog(s: UiState.Game, vm: GameViewModel) {
+    DialogShell(vm, "Achievements") {
+        val achievements = s.stats.achievements
+        val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.US) }
+        AchievementId.entries.forEach { id ->
+            val unlockedAt = achievements.unlocked[id]
+            Column(Modifier.fillMaxWidth().padding(vertical = 5.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = id.title,
+                        modifier = Modifier.weight(1f),
+                        color = Color.Black,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        text = when {
+                            unlockedAt != null -> "★ " + dateFormat.format(Date(unlockedAt))
+                            id == AchievementId.ACE_GRAND_TOUR ->
+                                "${achievements.aceConfigurationsSeen.size} / ${AchievementsState.ACE_CONFIGURATION_TOTAL}"
+                            else -> "Locked"
+                        },
+                        color = Color.Black,
+                        fontSize = 12.sp,
+                        fontWeight = if (unlockedAt != null) FontWeight.Bold else FontWeight.Normal,
+                    )
+                }
+                Text(
+                    text = id.description,
+                    color = Color.Black,
+                    fontSize = 12.sp,
+                )
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+        MenuItem("Close") { vm.closeDialog() }
+    }
+}
+
+@Composable
 private fun ControlsDialog(s: UiState.Game, vm: GameViewModel) {
     DialogShell(vm, "Controls") {
         Text(
@@ -421,8 +465,23 @@ private fun WonDialog(s: UiState.Game, vm: GameViewModel) {
             color = Color.Black,
             fontSize = 15.sp,
         )
+        if (s.newAchievements.isNotEmpty()) {
+            Spacer(Modifier.height(10.dp))
+            Text(
+                "Achievement" + (if (s.newAchievements.size > 1) "s" else "") + " unlocked:",
+                color = Color.Black,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            s.newAchievements.forEach { id ->
+                Text("★ ${id.title}", color = Color.Black, fontSize = 14.sp)
+            }
+        }
         Spacer(Modifier.height(12.dp))
         MenuItem("New Game", tag = "won_new_game") { vm.onNewGameConfirmed(restart = false) }
+        if (s.newAchievements.isNotEmpty()) {
+            MenuItem("Achievements") { vm.openDialog(DialogState.Achievements) }
+        }
         MenuItem("View Board") { vm.closeDialog() }
     }
 }

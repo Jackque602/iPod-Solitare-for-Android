@@ -41,8 +41,14 @@ All artwork and code are original. Nothing is copied from Apple.
   streaks, moves, time, foundation cards, best/worst/average game score,
   and per-game history.
 - **Gameplay data export/import**: one JSON file backs up statistics,
-  settings and the deal in progress (with its full undo history); import
-  restores it exactly - on the same phone or a different one.
+  settings, achievements and the deal in progress (with its full undo
+  history); import restores it exactly - on the same phone or a
+  different one.
+- **Achievements**: the Grand Tour (win with the foundations in all 24
+  possible suit orders, with progress tracking), Single Pass (win
+  without turning the waste over), and the three Kings' Court deals
+  (all four kings face up at once on the leftmost four, rightmost four,
+  or alternating columns).
 
 ## Project layout
 
