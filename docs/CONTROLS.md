@@ -24,6 +24,17 @@ select a destination.
   the same buttons move into a vertical rail on the right edge and the
   status line shrinks to a single row.
 
+## Widget board
+
+The home-screen widget is a playable board (add it as its own
+cover-display panel on the Razr). Tap a pile to pick it up, tap the
+same column again to pick up one more card per tap (a third/fourth tap
+walks deeper, then clears), and tap a destination to drop. The stock
+draws on tap, Undo/Auto/New sit in the header, and tapping the score
+opens the full app for hints, settings and statistics. The widget and
+the app share one save - moves made in either show up in both. The
+timer does not tick during widget play.
+
 ## Keyboard (Minimal Phone QWERTY)
 
 A cursor (thick black border) marks the active pile. The top row is

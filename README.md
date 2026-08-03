@@ -37,10 +37,13 @@ All artwork and code are original. Nothing is copied from Apple.
   compact layout with a vertical action rail for near-square or wide
   screens such as the Motorola Razr cover display - with safe-area
   insets keeping the board clear of its camera cutouts.
-- **Glance widget**: a monochrome home-screen widget (score, current
-  deal, record, Grand Tour progress; tap to play) that also works as a
-  full-screen cover-display panel on the Motorola Razr. It refreshes
-  after every move.
+- **Playable widget**: a tap-playable Solitaire board as a home-screen
+  widget - designed to run as a full-screen cover-display panel on the
+  Motorola Razr. Tap a pile to pick up, tap again on the same column to
+  grab a deeper run, tap a destination to drop; Undo, Auto and New
+  buttons included. It plays against the same save as the app, both
+  stay in sync, and every rule (scoring, achievements, undo refunds)
+  applies identically.
 - **Statistics**: cumulative score with high/low water marks, wins, losses,
   streaks, moves, time, foundation cards, best/worst/average game score,
   and per-game history.

@@ -430,7 +430,39 @@ class GameViewModel(
 
     fun onWindowActiveChanged(active: Boolean) {
         windowActive = active
-        if (!active) persist()
+        if (!active) {
+            persist()
+        } else {
+            viewModelScope.launch { reconcileWithStore() }
+        }
+    }
+
+    /**
+     * The widget plays against the persisted save directly, so when the
+     * app comes back to the foreground the in-memory session may be
+     * stale. If storage tells a different story (elapsed time aside),
+     * rebuild from storage.
+     */
+    private suspend fun reconcileWithStore() {
+        val s = session ?: return
+        val storedStats = store.loadStatistics()
+        val storedSave = store.loadSavedGame()
+        val inMemory = if (s.isWon) null else s.toSavedGame()
+        val sameGame = storedSave?.copy(elapsedSeconds = 0) == inMemory?.copy(elapsedSeconds = 0)
+        if (sameGame && storedStats == s.stats) return
+
+        session = SolitaireSession.start(
+            stats = storedStats,
+            savedGame = storedSave,
+            newSeed = seedSource(),
+            drawMode = settings.drawMode,
+            timestampMillis = clock(),
+        )
+        selection = null
+        cursor = Cursor(Zone.STOCK)
+        recentAchievements = emptyList()
+        clearMessage()
+        publish()
     }
 
     private fun startTicker() {

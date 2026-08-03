@@ -27,6 +27,15 @@ class DataStoreSolitaireStore(private val context: Context) : SolitaireStore {
         val settings = stringPreferencesKey("settings_json")
         val statistics = stringPreferencesKey("statistics_json")
         val savedGame = stringPreferencesKey("saved_game_json")
+        val widgetSelection = stringPreferencesKey("widget_selection")
+    }
+
+    /** The widget board's pending selection (encoded by WidgetPlay). */
+    suspend fun loadWidgetSelection(): String =
+        context.dataStore.data.first()[Keys.widgetSelection] ?: ""
+
+    suspend fun saveWidgetSelection(text: String) {
+        context.dataStore.edit { it[Keys.widgetSelection] = text }
     }
 
     override suspend fun loadSettings(): AppSettings {
