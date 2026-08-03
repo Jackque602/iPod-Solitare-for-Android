@@ -37,6 +37,10 @@ All artwork and code are original. Nothing is copied from Apple.
   compact layout with a vertical action rail for near-square or wide
   screens such as the Motorola Razr cover display - with safe-area
   insets keeping the board clear of its camera cutouts.
+- **Glance widget**: a monochrome home-screen widget (score, current
+  deal, record, Grand Tour progress; tap to play) that also works as a
+  full-screen cover-display panel on the Motorola Razr. It refreshes
+  after every move.
 - **Statistics**: cumulative score with high/low water marks, wins, losses,
   streaks, moves, time, foundation cards, best/worst/average game score,
   and per-game history.

@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Solitaire</string>
+    <string name="widget_header">♠ SOLITAIRE</string>
+    <string name="widget_hint">Tap to play</string>
+    <string name="widget_description">Score and current deal at a glance. Works as a full-screen cover-display panel.</string>
 </resources>

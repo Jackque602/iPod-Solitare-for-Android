@@ -10,6 +10,7 @@ import com.jackque.solitaire.engine.settings.AppSettings
 import com.jackque.solitaire.engine.settings.AppSettingsCodec
 import com.jackque.solitaire.engine.stats.Statistics
 import com.jackque.solitaire.engine.stats.StatisticsCodec
+import com.jackque.solitaire.widget.SolitaireWidgetProvider
 import kotlinx.coroutines.flow.first
 
 private val Context.dataStore by preferencesDataStore(name = "solitaire")
@@ -44,6 +45,10 @@ class DataStoreSolitaireStore(private val context: Context) : SolitaireStore {
 
     override suspend fun saveStatistics(statistics: Statistics) {
         context.dataStore.edit { it[Keys.statistics] = StatisticsCodec.encode(statistics) }
+        // Statistics are written on every persisted change (each move, win,
+        // import, ...), which makes this the one hook the glance widget
+        // needs to stay current.
+        SolitaireWidgetProvider.updateAll(context)
     }
 
     override suspend fun loadSavedGame(): SavedGame? {
