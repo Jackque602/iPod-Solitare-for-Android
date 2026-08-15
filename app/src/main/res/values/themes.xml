@@ -7,5 +7,8 @@
         <item name="android:navigationBarColor">@android:color/white</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowAnimationStyle">@null</item>
+        <!-- Let the window extend into the display-cutout strip; the game
+             lays its own status bar out around the cameras. -->
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
     </style>
 </resources>

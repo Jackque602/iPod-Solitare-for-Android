@@ -14,11 +14,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
@@ -43,9 +46,12 @@ import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
@@ -93,32 +99,56 @@ private fun GameScreen(s: UiState.Game, vm: GameViewModel) {
         if (s.selection != null) vm.onCancelSelection() else vm.onUndo()
     }
 
-    // safeDrawing keeps the board clear of system bars and display
-    // cutouts - e.g. the camera lenses that intrude into the Motorola
-    // Razr cover display.
+    // The status bar occupies the true top row of the window; only the
+    // horizontal span of a top display cutout (e.g. the Razr cover
+    // display's camera lenses) is left blank, and the board starts
+    // below whatever part of the cutout the bar does not cover. Side and
+    // bottom insets still pad the content normally.
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
-            .windowInsetsPadding(WindowInsets.safeDrawing)
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
             .focusRequester(focusRequester)
             .focusable()
             .onKeyEvent { event ->
                 if (event.type == KeyEventType.KeyDown) vm.onKey(keyNameOf(event)) else false
             },
     ) {
+        val cutout = topCutoutDp()
         when (layoutModeFor(maxWidth.value, maxHeight.value)) {
-            LayoutMode.TALL -> TallLayout(s, vm)
-            LayoutMode.COMPACT -> CompactLayout(s, vm)
+            LayoutMode.TALL -> TallLayout(s, vm, cutout, maxWidth.value)
+            LayoutMode.COMPACT -> CompactLayout(s, vm, cutout, maxWidth.value)
         }
+    }
+}
+
+/** The top display cutout in dp, or null when the screen has none. */
+@Composable
+private fun topCutoutDp(): TopCutout? {
+    val density = LocalDensity.current
+    val cutout = WindowInsets.displayCutout
+    val top = with(density) { cutout.getTop(density).toDp().value }
+    if (top <= 0f) return null
+    val left = with(density) { cutout.getLeft(density, LayoutDirection.Ltr).toDp().value }
+    val right = with(density) { cutout.getRight(density, LayoutDirection.Ltr).toDp().value }
+    // Compose reports the cutout only as edge insets, so infer the
+    // occupied horizontal span: a left/right inset means the notch hugs
+    // that side; with neither, treat it as a centered island.
+    val widthDp = LocalConfiguration.current.screenWidthDp.toFloat()
+    return when {
+        left > 0f -> TopCutout(0f, left, top)
+        right > 0f -> TopCutout(widthDp - right, widthDp, top)
+        else -> TopCutout(widthDp * 0.35f, widthDp * 0.65f, top)
     }
 }
 
 /** Classic portrait phone layout. */
 @Composable
-private fun TallLayout(s: UiState.Game, vm: GameViewModel) {
+private fun TallLayout(s: UiState.Game, vm: GameViewModel, cutout: TopCutout?, widthDp: Float) {
     Column(Modifier.fillMaxSize()) {
-        StatusBar(s, vm)
+        StatusBar(s, vm, cutout, widthDp)
+        Spacer(Modifier.height(CutoutLayout.spacerBelowBar(cutout, STATUS_BAR_HEIGHT_DP).dp))
         MessageLine(s.statusMessage)
         BoxWithConstraints(
             modifier = Modifier
@@ -146,9 +176,10 @@ private fun TallLayout(s: UiState.Game, vm: GameViewModel) {
  * width, and the action buttons in a vertical rail on the right.
  */
 @Composable
-private fun CompactLayout(s: UiState.Game, vm: GameViewModel) {
+private fun CompactLayout(s: UiState.Game, vm: GameViewModel, cutout: TopCutout?, widthDp: Float) {
     Column(Modifier.fillMaxSize()) {
-        CompactStatusBar(s)
+        CompactStatusBar(s, cutout, widthDp)
+        Spacer(Modifier.height(CutoutLayout.spacerBelowBar(cutout, COMPACT_BAR_HEIGHT_DP).dp))
         Row(Modifier.fillMaxWidth().weight(1f)) {
             BoxWithConstraints(
                 modifier = Modifier
@@ -193,11 +224,13 @@ private fun BoardColumns(
 
 /** One-line chrome for compact screens; the menu button lives in the rail. */
 @Composable
-private fun CompactStatusBar(s: UiState.Game) {
+private fun CompactStatusBar(s: UiState.Game, cutout: TopCutout?, widthDp: Float) {
+    val (startPad, endPad) = CutoutLayout.barPadding(cutout, widthDp)
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(30.dp)
+            .height(COMPACT_BAR_HEIGHT_DP.dp)
+            .padding(start = startPad.dp, end = endPad.dp)
             .padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -263,12 +296,18 @@ private fun ActionRail(s: UiState.Game, vm: GameViewModel) {
 // Status bar - stable layout: fixed heights, no elements appear/disappear.
 // ----------------------------------------------------------------------
 
+/** Bar heights are shared with the cutout math. */
+private const val STATUS_BAR_HEIGHT_DP = 46f
+private const val COMPACT_BAR_HEIGHT_DP = 30f
+
 @Composable
-private fun StatusBar(s: UiState.Game, vm: GameViewModel) {
+private fun StatusBar(s: UiState.Game, vm: GameViewModel, cutout: TopCutout?, widthDp: Float) {
+    val (startPad, endPad) = CutoutLayout.barPadding(cutout, widthDp)
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(46.dp)
+            .height(STATUS_BAR_HEIGHT_DP.dp)
+            .padding(start = startPad.dp, end = endPad.dp)
             .padding(horizontal = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,

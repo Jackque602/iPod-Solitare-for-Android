@@ -3,6 +3,7 @@ package com.jackque.solitaire
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import com.jackque.solitaire.data.DataStoreSolitaireStore
 import com.jackque.solitaire.ui.SolitaireApp
@@ -15,6 +16,9 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Draw into the status-bar strip and the cutout area so the game's
+        // own bar can sit on the true top row of the screen.
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContent {
             SolitaireTheme {
